@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     if: github.event.repository.owner.id == github.event.sender.id
     steps:
       - name: Checkout
@@ -35,4 +35,5 @@ jobs:
       - name: '运行'
         run: node index.js
         env:
-          COOKIE: ${{ secrets.COOKIE }}
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORD: ${{ secrets.PASSWORD }}
