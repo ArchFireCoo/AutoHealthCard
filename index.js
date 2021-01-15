@@ -13,31 +13,37 @@ const getTime = () =>
     headless: false,
     executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   })
-  const page = await browser.newPage()
 
-  await page.goto(
-    'https://authserver.jluzh.edu.cn/cas/login?service=https%3A%2F%2Fmy.jluzh.edu.cn%2F_web%2Ffusionportal%2Fthings.jsp%3F_p%3DYXM9MSZwPTEmbT1OJg__',
-  )
+  try {
+    const page = await browser.newPage()
 
-  await page.type('#username', process.env.USERNAME)
-  await page.type('#password', process.env.PASSWORD)
-  await page.click('#passbutton')
+    await page.goto(
+      'https://authserver.jluzh.edu.cn/cas/login?service=https%3A%2F%2Fmy.jluzh.edu.cn%2F_web%2Ffusionportal%2Fthings.jsp%3F_p%3DYXM9MSZwPTEmbT1OJg__',
+    )
 
-  await page.goto('https://work.jluzh.edu.cn/default/work/jlzh/jkxxtb/jkxxcj.jsp')
+    await page.type('#username', process.env.USERNAME)
+    await page.type('#password', process.env.PASSWORD)
+    await page.click('#passbutton')
 
-  await page.waitForSelector('.prompt_box_confirmText')
-  await sleep(1)
-  await page.click('.prompt_box_confirmText')
-  await page.click('.prompt_box_nextBtn')
-  await sleep(1)
-  await page.click('.icheckbox_square-green')
-  await page.click('#post')
-  await page.waitForSelector('.layui-layer-content')
+    await page.goto('https://work.jluzh.edu.cn/default/work/jlzh/jkxxtb/jkxxcj.jsp')
 
-  const result = await page.evaluate(() => document.querySelector('.layui-layer-content').innerText)
-  console.log(result)
+    await page.waitForSelector('.prompt_box_confirmText', { timeout: 120000 })
+    await sleep(1)
+    await page.click('.prompt_box_confirmText')
+    await page.click('.prompt_box_nextBtn')
+    await sleep(1)
+    await page.click('.icheckbox_square-green')
+    await page.click('#post')
+    await page.waitForSelector('.layui-layer-content')
 
-  await browser.close()
+    const result = await page.evaluate(() => document.querySelector('.layui-layer-content').innerText)
+    console.log(result)
+
+    await browser.close()
+  } catch (e) {
+    console.log(e)
+    await browser.close()
+  }
 
   console.log(`==================脚本结束- 北京时间(UTC+8)：${getTime()}=====================`)
 })()
