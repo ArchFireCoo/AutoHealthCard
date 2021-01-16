@@ -26,7 +26,7 @@ const getTime = () =>
     await page.click('#passbutton')
     
     await page.evaluate(() => {
-      let msg1 = document.querySelector('#msg1')
+      const msg1 = document.querySelector('#msg1')
       if (msg1 != null) throw new Error(msg1.innerText)
     })
 
