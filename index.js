@@ -27,8 +27,7 @@ const getTime = () =>
     
     await page.evaluate(() => {
       const msg1 = document.querySelector('#msg1')
-      console.log(msg1.innerText)
-      if (msg1 != null) throw new Error(msg1.innerText)
+      if (msg1 !== null) throw new Error(msg1.innerText)
     })
 
     await page.goto('https://work.jluzh.edu.cn/default/work/jlzh/jkxxtb/jkxxcj.jsp')
