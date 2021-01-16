@@ -21,27 +21,33 @@ const getTime = () =>
       'https://authserver.jluzh.edu.cn/cas/login?service=https%3A%2F%2Fmy.jluzh.edu.cn%2F_web%2Ffusionportal%2Fthings.jsp%3F_p%3DYXM9MSZwPTEmbT1OJg__',
     )
 
-    await page.type('#username', process.env.USERNAME)
+    await page.type('#username', process.env.USERNAME1)
     await page.type('#password', process.env.PASSWORD)
-    await page.click('#passbutton')
+
+    await Promise.all([
+      page.click('#passbutton'),
+      await page.waitForNavigation()
+    ])
+
+    if (page.url().includes('/cas/login')) throw new Error('账号或密码错误！')
 
     await page.goto('https://work.jluzh.edu.cn/default/work/jlzh/jkxxtb/jkxxcj.jsp')
 
-    await page.waitForSelector('.prompt_box_confirmText', { timeout: 120000 })
-    await sleep(1)
+    await page.waitForSelector('.prompt_box_confirmText', { visible: true })
     await page.click('.prompt_box_confirmText')
     await page.click('.prompt_box_nextBtn')
+    await page.waitForSelector('.model', { hidden: true })
     await sleep(1)
     await page.click('.icheckbox_square-green')
     await page.click('#post')
-    await page.waitForSelector('.layui-layer-content')
+    await page.waitForSelector('.layui-layer-content', { visible: true })
 
-    const result = await page.evaluate(() => document.querySelector('.layui-layer-content').innerText)
+    const result = await page.$eval('.layui-layer-content', ele => ele.innerText)
     console.log(result)
 
     await browser.close()
   } catch (e) {
-    console.log(e)
+    console.error(e)
     await browser.close()
   }
 
