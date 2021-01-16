@@ -26,7 +26,7 @@ const getTime = () =>
 
     await Promise.all([
       page.click('#passbutton'),
-      await page.waitForNavigation()
+      page.waitForNavigation()
     ])
 
     if (page.url().includes('/cas/login')) throw new Error('账号或密码错误！')
