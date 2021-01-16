@@ -24,6 +24,11 @@ const getTime = () =>
     await page.type('#username', process.env.USERNAME)
     await page.type('#password', process.env.PASSWORD)
     await page.click('#passbutton')
+    
+    await page.evaluate(() => {
+      let msg1 = document.querySelector('#msg1')
+      if (msg1 != null) throw new Error(msg1.innerText)
+    })
 
     await page.goto('https://work.jluzh.edu.cn/default/work/jlzh/jkxxtb/jkxxcj.jsp')
 
