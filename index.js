@@ -1,13 +1,15 @@
 const puppeteer = require('puppeteer-core')
 
+let count = 0
 const sleep = (time) => new Promise((res) => setTimeout(res, time * 1000))
 const getTime = () =>
   new Date(
     new Date().getTime() + new Date().getTimezoneOffset() * 60 * 1000 + 8 * 60 * 60 * 1000,
   ).toLocaleString()
 
-;(async () => {
+const startUp = async () => {
   console.log(`==================脚本执行- 北京时间(UTC+8)：${getTime()}=====================`)
+  console.log(`执行次数: ${++count}`)
 
   const browser = await puppeteer.launch({
     headless: false,
@@ -26,7 +28,9 @@ const getTime = () =>
 
     await Promise.all([
       page.click('#passbutton'),
-      page.waitForNavigation()
+      page.waitForNavigation({
+        timeout: 60000,
+      }),
     ])
 
     if (page.url().includes('/cas/login')) throw new Error('账号或密码错误！')
@@ -42,14 +46,17 @@ const getTime = () =>
     await page.click('#post')
     await page.waitForSelector('.layui-layer-content', { visible: true })
 
-    const result = await page.$eval('.layui-layer-content', ele => ele.innerText)
+    const result = await page.$eval('.layui-layer-content', (ele) => ele.innerText)
     console.log(result)
 
     await browser.close()
   } catch (e) {
     console.error(e)
+    if (e.message !== '账号或密码错误！' && count < 5) setTimeout(startUp, 1000)
     await browser.close()
   }
 
   console.log(`==================脚本结束- 北京时间(UTC+8)：${getTime()}=====================`)
-})()
+}
+
+startUp()
