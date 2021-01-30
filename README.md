@@ -15,7 +15,7 @@
 2. Copy the .github directory to your own repository
 3. Set the [Secrets](#Secrets)
 
-### Method 2:
+### Method 2 (Recommended):
 1. Fork this repository
 2. In your forked repository
 3. Set the [Secrets](#Secrets)
