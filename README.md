@@ -12,13 +12,7 @@
 
 ### Method 1: 
 1. Create a new repository
-2. Copy the .github directory to your own repository and modify auto_health_card.yml as follows
-```diff
-- uses: actions/checkout@v2
-+ uses: actions/checkout@v2
-+ with:
-+   repository: ArchFireCoo/AutoHealthCard
-```
+2. Copy the .github directory to your own repository
 3. Set the [Secrets](#Secrets)
 
 ### Method 2:
