@@ -1,5 +1,5 @@
 # AutoHealthCard
-![auto_health_card](https://github.com/Jasonzj/AutoHealthCard/workflows/auto_health_card/badge.svg)
+![auto_health_card](https://github.com/Jasonzj/AutoHealthCard/workflows/auto_health_card/badge.svg?branch=jason)
 
 吉珠自动填写健康卡
 
