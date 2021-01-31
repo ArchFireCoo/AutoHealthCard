@@ -24,7 +24,7 @@ The action will automatically run at 10 and 11am(GMT+8) everyday.
 |SCKEY|server酱|
 |USERNAME||
 |PASSWORD||
-|RANGE|student id range<br>`04181101:04181120`<br>support multiple ranges<br>`04181101:04181110,04182201:04182215`|
+|RANGE|student id range<br>`04181101:04181120`<br>support multiple ranges<br>`04181101:04181110,04182201:04182215`<br>support single student id<br>`04181101,04181102,04181103`<br>support mixed single student id and range<br>`04181101:04181110,04181115,04181216:04181220`|
 |LIMIT|concurrence limit<br>default value is 1|
 
 This repository has two different mode scripts that sign-in, one is browser mode and the other is request mode.
