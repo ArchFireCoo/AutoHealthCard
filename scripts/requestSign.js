@@ -167,6 +167,7 @@ const generateStudentIDList = (rangeArr) =>
   rangeArr.reduce((prev, cur) => {
     const range = cur.split(':')
     const padStr = range[0][0] === '0' ? '0' : ''
+    if (!range[1]) return prev.concat(range)
     return prev.concat(generateRangeArr(+range[0], +range[1], padStr))
   }, [])
 
