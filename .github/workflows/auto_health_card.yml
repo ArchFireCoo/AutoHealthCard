@@ -3,7 +3,7 @@ name: auto_health_card
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 2,3 * * *'
+    - cron: '10,40 0 * * *'
   watch:
     types: started
   repository_dispatch:
