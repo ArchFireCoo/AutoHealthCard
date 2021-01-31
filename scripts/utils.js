@@ -20,8 +20,8 @@ const keysToLowerCase = (obj) => {
 
 const datePadZero = (item) => item.toString().padStart(2, '0')
 
-const generateRangeArr = (start, stop, str) =>
-  Array.from({ length: stop - start + 1 }, (_, i) => str + (start + i))
+const generateRangeArr = (start, stop, padStr) =>
+  Array.from({ length: stop - start + 1 }, (_, i) => padStr + (start + i))
 
 module.exports = {
   removeNullsInObject,

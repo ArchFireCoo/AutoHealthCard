@@ -68,14 +68,18 @@ const getHealthData = async (studentID) => {
 
 const constructHealthData = (data) => {
   const date = new Date()
-  let currentDateArr = date.toLocaleDateString().split('/')
+  const currentDateArr = date.toLocaleDateString().split('/')
+
   if (process.env.ISACTION) {
     currentDateArr.reverse()
     currentDateArr[1] = currentDateArr.splice(2, 1, currentDateArr[1])[0]
   }
-  let currentDate = currentDateArr.map(datePadZero).join('-')
+
+  const currentDate = currentDateArr.map(datePadZero).join('-')
   const currentHour = datePadZero(date.getHours())
   const currentMinute = datePadZero(date.getMinutes())
+
+  keysToLowerCase(data)
 
   const result = {
     entity: {
@@ -89,13 +93,12 @@ const constructHealthData = (data) => {
     },
   }
   delete result.entity.id
+
   return result
 }
 
-const submitHealthCard = async (data) => {
-  const studentID = data['GH']
+const submitHealthCard = async (studentID, data) => {
   try {
-    keysToLowerCase(data)
     const response = await axios.post(api.submitHealthCard, constructHealthData(data), {
       headers: headers,
     })
@@ -113,7 +116,7 @@ const execSign = async (studentID) => {
     const { isSignIn } = await checkSignInStatus(studentID)
     if (isSignIn) return
     const studentHealthData = await getHealthData(studentID)
-    await submitHealthCard(studentHealthData)
+    await submitHealthCard(studentID, studentHealthData)
   } catch (error) {
     logger(error)
   }
@@ -160,20 +163,17 @@ const login = async (username, password) => {
   })
 }
 
-const initEnvironment = () => {
-  const range = process.env.RANGE.split(':')
-  return {
-    ...process.env,
-    RANGE_HEAD: +range[0],
-    RANGE_TAIL: +range[1],
-    FILLSTR: range[0][0] === '0' ? '0' : '',
-  }
-}
+const generateStudentIDList = (rangeArr) =>
+  rangeArr.reduce((prev, cur) => {
+    const range = cur.split(':')
+    const padStr = range[0][0] === '0' ? '0' : ''
+    return prev.concat(generateRangeArr(+range[0], +range[1], padStr))
+  }, [])
 
 const startUp = async () => {
-  const { USERNAME, PASSWORD, RANGE_HEAD, RANGE_TAIL, FILLSTR, LIMIT } = initEnvironment()
-  const studentIDList = generateRangeArr(RANGE_HEAD, RANGE_TAIL, FILLSTR)
-  await login(USERNAME, PASSWORD)
+  const { USERNAME1, PASSWORD, RANGE, LIMIT } = process.env
+  const studentIDList = generateStudentIDList(RANGE.split(','))
+  await login(USERNAME1, PASSWORD)
   await asyncLimit(studentIDList, execSign, +LIMIT || 1)
 }
 
