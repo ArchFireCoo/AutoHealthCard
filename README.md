@@ -1,12 +1,7 @@
 # AutoHealthCard
-![auto_health_card](https://github.com/Jasonzj/AutoHealthCard/workflows/auto_health_card/badge.svg?branch=jason)
+![auto_health_card](https://github.com/Jasonzj/AutoHealthCard/workflows/auto_health_card/badge.svg)
 
 吉珠自动填写健康卡
-
-## Secrets:
-+ USERNAME
-
-+ PASSWORD
 
 ## Usage:
 
