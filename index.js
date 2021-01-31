@@ -9,9 +9,9 @@ const getTime = () => new Date().toLocaleString()
   let range = process.env.RANGE
   if (range) {
     logger('执行: requestSign')
-    await requestSign()
+    const studentIDListLen = await requestSign()
     range = range.split(':')
-    range[1] - range[0] < 10 && sendNotify('HealthCard', logRef.log)
+    studentIDListLen <= 10 && sendNotify('HealthCard', logRef.log)
   } else {
     logger('执行: browserSign')
     await browserSign()

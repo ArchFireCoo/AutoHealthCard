@@ -175,6 +175,7 @@ const startUp = async () => {
   const studentIDList = generateStudentIDList(RANGE.split(','))
   await login(USERNAME, PASSWORD)
   await asyncLimit(studentIDList, execSign, +LIMIT || 1)
+  return studentIDList.length
 }
 
 module.exports = startUp
