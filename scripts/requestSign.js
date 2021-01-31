@@ -171,9 +171,9 @@ const generateStudentIDList = (rangeArr) =>
   }, [])
 
 const startUp = async () => {
-  const { USERNAME1, PASSWORD, RANGE, LIMIT } = process.env
+  const { USERNAME, PASSWORD, RANGE, LIMIT } = process.env
   const studentIDList = generateStudentIDList(RANGE.split(','))
-  await login(USERNAME1, PASSWORD)
+  await login(USERNAME, PASSWORD)
   await asyncLimit(studentIDList, execSign, +LIMIT || 1)
 }
 
