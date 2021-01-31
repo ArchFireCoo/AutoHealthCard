@@ -3,7 +3,13 @@ const request = require('request')
 const cheerio = require('cheerio')
 const qs = require('qs')
 const asyncLimit = require('j-async')
-const { keysToLowerCase, datePadZero, generateRangeArr } = require('./utils')
+const {
+  keysToLowerCase,
+  datePadZero,
+  generateRangeArr,
+  generateDateRangeArr,
+  createCurry,
+} = require('./utils')
 const { logger } = require('./logger')
 
 const headers = {
@@ -66,8 +72,8 @@ const getHealthData = async (studentID) => {
   return data
 }
 
-const constructHealthData = (data) => {
-  const date = new Date()
+const constructHealthData = (data, date) => {
+  date = date || new Date()
   const currentDateArr = date.toLocaleDateString().split('/')
 
   if (process.env.ISACTION) {
@@ -97,9 +103,9 @@ const constructHealthData = (data) => {
   return result
 }
 
-const submitHealthCard = async (studentID, data) => {
+const submitHealthCard = async (studentID, data, date) => {
   try {
-    const response = await axios.post(api.submitHealthCard, constructHealthData(data), {
+    const response = await axios.post(api.submitHealthCard, constructHealthData(data, date), {
       headers: headers,
     })
 
@@ -111,15 +117,25 @@ const submitHealthCard = async (studentID, data) => {
   }
 }
 
-const execSign = async (studentID) => {
+const execSign = async (studentID, date) => {
   try {
-    const { isSignIn } = await checkSignInStatus(studentID)
-    if (isSignIn) return
+    if (!date) {
+      const { isSignIn } = await checkSignInStatus(studentID)
+      if (isSignIn) return
+    }
+
     const studentHealthData = await getHealthData(studentID)
-    await submitHealthCard(studentID, studentHealthData)
+    await submitHealthCard(studentID, studentHealthData, date)
   } catch (error) {
     logger(error)
   }
+}
+
+const execDateSign = async (studentIDList, date) => {
+  const { LIMIT } = process.env
+  logger(`当前填报日期: ${date.toLocaleDateString()}`)
+  const execSignByDate = createCurry(execSign, date)
+  await asyncLimit(studentIDList, execSignByDate, +LIMIT || 1)
 }
 
 const login = async (username, password) => {
@@ -163,19 +179,35 @@ const login = async (username, password) => {
   })
 }
 
-const generateStudentIDList = (rangeArr) =>
+const concatRangeArr = (rangeArr, isDate = false) =>
   rangeArr.reduce((prev, cur) => {
     const range = cur.split(':')
+
+    if (!range[1]) return prev.concat(isDate ? new Date(range[0]) : range)
+
     const padStr = range[0][0] === '0' ? '0' : ''
-    if (!range[1]) return prev.concat(range)
-    return prev.concat(generateRangeArr(+range[0], +range[1], padStr))
+    const curRangeArr = isDate
+      ? generateDateRangeArr(range[0], range[1])
+      : generateRangeArr(range[0], range[1], padStr)
+
+    return prev.concat(curRangeArr)
   }, [])
 
 const startUp = async () => {
-  const { USERNAME, PASSWORD, RANGE, LIMIT } = process.env
-  const studentIDList = generateStudentIDList(RANGE.split(','))
+  const { USERNAME, PASSWORD, RANGE, LIMIT, DATERANGE } = process.env
   await login(USERNAME, PASSWORD)
-  await asyncLimit(studentIDList, execSign, +LIMIT || 1)
+  const studentIDList = concatRangeArr(RANGE.split(','))
+
+  if (DATERANGE) {
+    const dateRange = concatRangeArr(DATERANGE.split(','), true)
+    const execDateSignBind = execDateSign.bind(null, studentIDList)
+    logger(`检测到日期范围: ${dateRange.map((date) => date.toLocaleDateString())}`)
+    await asyncLimit(dateRange, execDateSignBind, 1)
+    return studentIDList * dateRange.length
+  } else {
+    await asyncLimit(studentIDList, execSign, +LIMIT || 1)
+  }
+
   return studentIDList.length
 }
 
