@@ -1,13 +1,9 @@
-let logRef = {
-  log: '',
-}
+let log = ''
 
-const logger = (message) => {
-  logRef.log += `${message}\n\n`
+const pushMessage = (message) => {
+  exports.log += `${message}\n\n`
   console.log(message)
 }
 
-module.exports = {
-  logRef,
-  logger,
-}
+exports.log = log
+exports.pushMessage = pushMessage

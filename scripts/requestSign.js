@@ -10,7 +10,7 @@ const {
   generateDateRangeArr,
   createCurry,
 } = require('./utils')
-const { logger } = require('./logger')
+const { pushMessage } = require('./logger')
 
 const headers = {
   Cookie: null,
@@ -50,10 +50,14 @@ const checkSignInStatus = async (studentID, isToday = true) => {
     const isSignIn = list.length > 0
 
     isToday
-      ? logger(`检查填报状态Success: 学号: ${studentID}, 查询条件: ${conditionStr}, 记录: ${list.length}`)
-      : logger(`获取健康数据Success: 学号: ${studentID}, 查询条件: ${conditionStr}, 记录: ${list.length}`)
+      ? pushMessage(
+          `检查填报状态Success: 学号: ${studentID}, 查询条件: ${conditionStr}, 记录: ${list.length}`,
+        )
+      : pushMessage(
+          `获取健康数据Success: 学号: ${studentID}, 查询条件: ${conditionStr}, 记录: ${list.length}`,
+        )
 
-    isToday && isSignIn && logger(`学号: ${studentID}, 今天已填报，取消填报`)
+    isToday && isSignIn && pushMessage(`学号: ${studentID}, 今天已填报，取消填报`)
 
     return {
       isSignIn,
@@ -110,7 +114,7 @@ const submitHealthCard = async (studentID, data, date) => {
     })
 
     if (response.data.result != 1) throw new Error()
-    logger(`填报Success: 学号: ${studentID}`)
+    pushMessage(`填报Success: 学号: ${studentID}`)
   } catch (error) {
     console.error(error)
     throw new Error(`填报Failure: 学号: ${studentID}`)
@@ -127,13 +131,13 @@ const execSign = async (studentID, date) => {
     const studentHealthData = await getHealthData(studentID)
     await submitHealthCard(studentID, studentHealthData, date)
   } catch (error) {
-    logger(error)
+    pushMessage(error)
   }
 }
 
 const execDateSign = async (studentIDList, date) => {
   const { LIMIT } = process.env
-  logger(`当前填报日期: ${date.toLocaleDateString()}`)
+  pushMessage(`当前填报日期: ${date.toLocaleDateString()}`)
   const execSignByDate = createCurry(execSign, date)
   await asyncLimit(studentIDList, execSignByDate, +LIMIT || 1)
 }
@@ -153,12 +157,12 @@ const login = async (username, password) => {
   })
 
   if (!cheerio.load(loginResponse.data)('div.success').html()) {
-    logger('登入失败')
+    pushMessage('登入失败')
     process.exit(1)
   }
 
   headers.Cookie = loginResponse.headers['set-cookie'][2]
-  logger('登入成功')
+  pushMessage('登入成功')
 
   return new Promise((resolve, reject) => {
     request(
@@ -172,7 +176,7 @@ const login = async (username, password) => {
         if (err) reject(err)
         var cookies = j.getCookies(api.healthCard)
         headers.Cookie = cookies[0].cookieString()
-        logger(`获取Cookie成功`)
+        pushMessage(`获取Cookie成功`)
         resolve()
       },
     )
@@ -201,7 +205,7 @@ const startUp = async () => {
   if (DATERANGE) {
     const dateRange = concatRangeArr(DATERANGE.split(','), true)
     const execDateSignBind = execDateSign.bind(null, studentIDList)
-    logger(`检测到日期范围: ${dateRange.map((date) => date.toLocaleDateString())}`)
+    pushMessage(`检测到日期范围: ${dateRange.map((date) => date.toLocaleDateString())}`)
     await asyncLimit(dateRange, execDateSignBind, 1)
     return studentIDList * dateRange.length
   } else {
