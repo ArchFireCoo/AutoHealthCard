@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer-core')
-const { logger } = require('./logger')
+const { pushMessage } = require('./logger')
 
 let count = 0
 const sleep = (time) => new Promise((res) => setTimeout(res, time * 1000))
@@ -7,7 +7,7 @@ const sleep = (time) => new Promise((res) => setTimeout(res, time * 1000))
 const startUp = () => {
   return new Promise((resolve) => {
     const execSign = async () => {
-      logger(`执行次数: ${++count}`)
+      pushMessage(`执行次数: ${++count}`)
 
       const browser = await puppeteer.launch({
         headless: false,
@@ -45,12 +45,12 @@ const startUp = () => {
         await page.waitForSelector('.layui-layer-content', { visible: true })
 
         const result = await page.$eval('.layui-layer-content', (ele) => ele.innerText)
-        logger(result)
+        pushMessage(result)
 
         await browser.close()
         resolve()
       } catch (e) {
-        logger(e)
+        pushMessage(e)
         if (e.message !== '账号或密码错误！' && count < 5) setTimeout(startUp, 1000)
         if (count === 5) resolve()
         await browser.close()
