@@ -3,13 +3,7 @@ const request = require('request')
 const cheerio = require('cheerio')
 const qs = require('qs')
 const asyncLimit = require('j-async')
-const {
-  keysToLowerCase,
-  datePadZero,
-  generateRangeArr,
-  generateDateRangeArr,
-  createCurry,
-} = require('./utils')
+const { keysToLowerCase, datePadZero, concatRangeArr, createCurry } = require('./utils')
 const { pushMessage } = require('./logger')
 
 const headers = {
@@ -35,45 +29,51 @@ const loginDataTmp = {
   submit: '登  录',
 }
 
-const checkSignInStatus = async (studentID, isToday = true) => {
+const getSignInRecord = async (studentID, isToday = false) => {
+  const response = await axios.post(
+    api.checkSignInStatus,
+    { params: { empcode: studentID }, querySqlId: isToday ? api.queryToday : api.queryNear },
+    {
+      headers: headers,
+    },
+  )
+
+  return {
+    recordList: response.data.list,
+    recordLength: response.data.list.length,
+  }
+}
+
+const checkSignInStatus = async (studentID, prevRecordLength = 0) => {
   try {
-    const response = await axios.post(
-      api.checkSignInStatus,
-      { params: { empcode: studentID }, querySqlId: isToday ? api.queryToday : api.queryNear },
-      {
-        headers: headers,
-      },
-    )
+    const isToday = !prevRecordLength
+    const { recordLength } = await getSignInRecord(studentID, isToday)
+    const isSignIn = recordLength > 0
+    const isNewRecord = recordLength > prevRecordLength
 
-    const list = response.data.list
-    const conditionStr = isToday ? '天' : '最近'
-    const isSignIn = list.length > 0
+    pushMessage(`检查填报状态Success: 学号: ${studentID}`)
 
-    isToday
-      ? pushMessage(
-          `检查填报状态Success: 学号: ${studentID}, 查询条件: ${conditionStr}, 记录: ${list.length}`,
-        )
-      : pushMessage(
-          `获取健康数据Success: 学号: ${studentID}, 查询条件: ${conditionStr}, 记录: ${list.length}`,
-        )
-
-    isToday && isSignIn && pushMessage(`学号: ${studentID}, 今天已填报，取消填报`)
-
-    return {
-      isSignIn,
-      data: list[0],
-    }
+    return isToday ? isSignIn : isNewRecord
   } catch (error) {
     console.error(error)
-    throw isToday
-      ? new Error(`检查填报状态Failure: 学号: ${studentID}, Cookie出错`)
-      : new Error(`获取健康数据Failure: 学号: ${studentID}, Cookie出错`)
+    new Error(`检查填报状态Failure: 学号: ${studentID}, Cookie出错`)
   }
 }
 
 const getHealthData = async (studentID) => {
-  const { data } = await checkSignInStatus(studentID, false)
-  return data
+  try {
+    const { recordList, recordLength } = await getSignInRecord(studentID, false)
+
+    pushMessage(`获取健康数据Success: 学号: ${studentID}`)
+
+    return {
+      data: recordList[0],
+      recordLength,
+    }
+  } catch (error) {
+    console.log(error)
+    new Error(`获取健康数据Failure: 学号: ${studentID}, Cookie出错`)
+  }
 }
 
 const constructHealthData = (data, date) => {
@@ -107,13 +107,15 @@ const constructHealthData = (data, date) => {
   return result
 }
 
-const submitHealthCard = async (studentID, data, date) => {
+const submitHealthCard = async (studentID, healthData, date) => {
   try {
-    const response = await axios.post(api.submitHealthCard, constructHealthData(data, date), {
+    await axios.post(api.submitHealthCard, constructHealthData(healthData.data, date), {
       headers: headers,
     })
+    const isSignIn = await checkSignInStatus(studentID, date && healthData.recordLength)
 
-    if (response.data.result != 1) throw new Error()
+    if (!isSignIn) throw ''
+
     pushMessage(`填报Success: 学号: ${studentID}`)
   } catch (error) {
     console.error(error)
@@ -124,8 +126,11 @@ const submitHealthCard = async (studentID, data, date) => {
 const execSign = async (studentID, date) => {
   try {
     if (!date) {
-      const { isSignIn } = await checkSignInStatus(studentID)
-      if (isSignIn) return
+      const isSignIn = await checkSignInStatus(studentID)
+      if (isSignIn) {
+        pushMessage(`学号: ${studentID}, 今天已填报，取消填报`)
+        return
+      }
     }
 
     const studentHealthData = await getHealthData(studentID)
@@ -183,23 +188,9 @@ const login = async (username, password) => {
   })
 }
 
-const concatRangeArr = (rangeArr, isDate = false) =>
-  rangeArr.reduce((prev, cur) => {
-    const range = cur.split(':')
-
-    if (!range[1]) return prev.concat(isDate ? new Date(range[0]) : range)
-
-    const padStr = range[0][0] === '0' ? '0' : ''
-    const curRangeArr = isDate
-      ? generateDateRangeArr(range[0], range[1])
-      : generateRangeArr(range[0], range[1], padStr)
-
-    return prev.concat(curRangeArr)
-  }, [])
-
 const startUp = async () => {
-  const { USERNAME, PASSWORD, RANGE, LIMIT, DATERANGE } = process.env
-  await login(USERNAME, PASSWORD)
+  const { USERNAME1, PASSWORD, RANGE, LIMIT, DATERANGE } = process.env
+  await login(USERNAME1, PASSWORD)
   const studentIDList = concatRangeArr(RANGE.split(','))
 
   if (DATERANGE) {

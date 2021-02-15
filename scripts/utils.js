@@ -32,6 +32,20 @@ const generateDateRangeArr = (start, stop) =>
     return date
   })
 
+const concatRangeArr = (rangeArr, isDate = false) =>
+  rangeArr.reduce((prev, cur) => {
+    const range = cur.split(':')
+
+    if (!range[1]) return prev.concat(isDate ? new Date(range[0]) : range)
+
+    const padStr = range[0][0] === '0' ? '0' : ''
+    const curRangeArr = isDate
+      ? generateDateRangeArr(range[0], range[1])
+      : generateRangeArr(range[0], range[1], padStr)
+
+    return prev.concat(curRangeArr)
+  }, [])
+
 const createCurry = (func, args) => {
   var arity = func.length
   var args = args || []
@@ -51,5 +65,6 @@ module.exports = {
   datePadZero,
   generateRangeArr,
   generateDateRangeArr,
+  concatRangeArr,
   createCurry,
 }
