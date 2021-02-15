@@ -45,6 +45,6 @@ jobs:
           PASSWORD: ${{ secrets.PASSWORD }}
           RANGE: ${{ secrets.RANGE }}
           LIMIT: ${{ secrets.LIMIT }}
-          DATERANGE: ${{ secrets.DATERANGE }}
+          DATE_RANGE: ${{ secrets.DATE_RANGE }}
           SCKEY: ${{ secrets.SCKEY }}
           ISACTION: true
