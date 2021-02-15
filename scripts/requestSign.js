@@ -29,6 +29,8 @@ const loginDataTmp = {
   submit: '登  录',
 }
 
+let failStudentIdList = []
+
 const getSignInRecord = async (studentID, isToday = false) => {
   const response = await axios.post(
     api.checkSignInStatus,
@@ -51,7 +53,7 @@ const checkSignInStatus = async (studentID, prevRecordLength = 0) => {
     const isSignIn = recordLength > 0
     const isNewRecord = recordLength > prevRecordLength
 
-    pushMessage(`检查填报状态Success: 学号: ${studentID}`)
+    console.log(`检查填报状态Success: 学号: ${studentID}`)
 
     return isToday ? isSignIn : isNewRecord
   } catch (error) {
@@ -64,7 +66,7 @@ const getHealthData = async (studentID) => {
   try {
     const { recordList, recordLength } = await getSignInRecord(studentID, false)
 
-    pushMessage(`获取健康数据Success: 学号: ${studentID}`)
+    console.log(`获取健康数据Success: 学号: ${studentID}`)
 
     return {
       data: recordList[0],
@@ -116,7 +118,7 @@ const submitHealthCard = async (studentID, healthData, date) => {
 
     if (!isSignIn) throw ''
 
-    pushMessage(`填报Success: 学号: ${studentID}`)
+    console.log(`填报Success: 学号: ${studentID}`)
   } catch (error) {
     console.error(error)
     throw new Error(`填报Failure: 学号: ${studentID}`)
@@ -128,7 +130,7 @@ const execSign = async (studentID, date) => {
     if (!date) {
       const isSignIn = await checkSignInStatus(studentID)
       if (isSignIn) {
-        pushMessage(`学号: ${studentID}, 今天已填报，取消填报`)
+        console.log(`学号: ${studentID}, 今天已填报，取消填报`)
         return
       }
     }
@@ -136,15 +138,21 @@ const execSign = async (studentID, date) => {
     const studentHealthData = await getHealthData(studentID)
     await submitHealthCard(studentID, studentHealthData, date)
   } catch (error) {
-    pushMessage(error)
+    console.log(error)
+    failStudentIdList.push(studentID)
   }
 }
 
 const execDateSign = async (studentIDList, date) => {
   const { LIMIT } = process.env
-  pushMessage(`当前填报日期: ${date.toLocaleDateString()}`)
   const execSignByDate = createCurry(execSign, date)
+  failStudentIdList = []
+
+  pushMessage(`当前填报日期: ${date.toLocaleDateString()}`)
+
   await asyncLimit(studentIDList, execSignByDate, +LIMIT || 1)
+
+  pushMessage(`失败列表: ${failStudentIdList}, 总计: ${failStudentIdList.length}`)
 }
 
 const login = async (username, password) => {
@@ -189,21 +197,24 @@ const login = async (username, password) => {
 }
 
 const startUp = async () => {
-  const { USERNAME1, PASSWORD, RANGE, LIMIT, DATERANGE } = process.env
-  await login(USERNAME1, PASSWORD)
+  const { USERNAME, PASSWORD, RANGE, LIMIT, DATE_RANGE } = process.env
+  await login(USERNAME, PASSWORD)
   const studentIDList = concatRangeArr(RANGE.split(','))
 
-  if (DATERANGE) {
-    const dateRange = concatRangeArr(DATERANGE.split(','), true)
+  pushMessage(`填报列表: ${studentIDList}, 总计: ${studentIDList.length}`)
+
+  if (DATE_RANGE) {
+    const dateRange = concatRangeArr(DATE_RANGE.split(','), true)
     const execDateSignBind = execDateSign.bind(null, studentIDList)
+
     pushMessage(`检测到日期范围: ${dateRange.map((date) => date.toLocaleDateString())}`)
+
     await asyncLimit(dateRange, execDateSignBind, 1)
     return studentIDList * dateRange.length
   } else {
     await asyncLimit(studentIDList, execSign, +LIMIT || 1)
+    pushMessage(`失败列表: ${failStudentIdList}, 总计: ${failStudentIdList.length}`)
   }
-
-  return studentIDList.length
 }
 
 module.exports = startUp

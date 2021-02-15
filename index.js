@@ -9,12 +9,11 @@ const getTime = () => new Date().toLocaleString()
   let range = process.env.RANGE
   if (range) {
     logger.pushMessage('执行: requestSign')
-    const studentIDListLen = await requestSign()
-    studentIDListLen <= 10 && sendNotify('HealthCard', logger.log)
+    await requestSign()
   } else {
     logger.pushMessage('执行: browserSign')
     await browserSign()
-    sendNotify('HealthCard', logger.log)
   }
+  sendNotify('HealthCard', logger.log)
   console.log(`==================脚本结束- 北京时间(UTC+8)：${getTime()}=====================`)
 })()
