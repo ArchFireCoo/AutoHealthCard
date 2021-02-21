@@ -1,5 +1,5 @@
-const axios = require('axios')
-const request = require('request')
+const got = require('got')
+const { CookieJar } = require('tough-cookie')
 const cheerio = require('cheerio')
 const qs = require('qs')
 const asyncLimit = require('j-async')
@@ -7,7 +7,9 @@ const { keysToLowerCase, datePadZero, concatRangeArr, createCurry } = require('.
 const { pushMessage } = require('./logger')
 
 const headers = {
-  Cookie: null,
+  'Content-Type': 'application/x-www-form-urlencoded',
+  'User-Agent':
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_1_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36',
 }
 
 const api = {
@@ -29,20 +31,24 @@ const loginDataTmp = {
   submit: '登  录',
 }
 
+const cookieJar = new CookieJar()
+
+let customGot = got.extend({
+  headers,
+  cookieJar,
+})
+
 let failStudentIdList = []
 
 const getSignInRecord = async (studentID, isToday = false) => {
-  const response = await axios.post(
-    api.checkSignInStatus,
-    { params: { empcode: studentID }, querySqlId: isToday ? api.queryToday : api.queryNear },
-    {
-      headers: headers,
-    },
-  )
+  const response = await customGot(api.checkSignInStatus, {
+    method: 'POST',
+    json: { params: { empcode: studentID }, querySqlId: isToday ? api.queryToday : api.queryNear },
+  })
 
   return {
-    recordList: response.data.list,
-    recordLength: response.data.list.length,
+    recordList: response.body.list,
+    recordLength: response.body.list.length,
   }
 }
 
@@ -111,8 +117,9 @@ const constructHealthData = (data, date) => {
 
 const submitHealthCard = async (studentID, healthData, date) => {
   try {
-    await axios.post(api.submitHealthCard, constructHealthData(healthData.data, date), {
-      headers: headers,
+    await customGot(api.submitHealthCard, {
+      method: 'POST',
+      json: constructHealthData(healthData.data, date),
     })
     const isSignIn = await checkSignInStatus(studentID, date && healthData.recordLength)
 
@@ -156,43 +163,27 @@ const execDateSign = async (studentIDList, date) => {
 }
 
 const login = async (username, password) => {
-  const j = request.jar()
-  const loginPageResponse = await axios.get(api.login)
-  const $ = cheerio.load(loginPageResponse.data)
+  const loginPageResponse = await customGot(api.login)
+  const $ = cheerio.load(loginPageResponse.body)
   const execution = $('input[name="execution"]').attr('value')
-  const data = qs.stringify({ ...loginDataTmp, username, password, execution })
 
-  const loginResponse = await axios({
-    url: api.login,
+  const loginResponse = await customGot(api.login, {
     method: 'POST',
-    headers: headers,
-    data,
+    body: qs.stringify({ ...loginDataTmp, username, password, execution }),
   })
 
-  if (!cheerio.load(loginResponse.data)('div.success').html()) {
+  if (!cheerio.load(loginResponse.body)('div.success').html()) {
     pushMessage('登入失败')
     process.exit(1)
   }
 
-  headers.Cookie = loginResponse.headers['set-cookie'][2]
   pushMessage('登入成功')
 
-  return new Promise((resolve, reject) => {
-    request(
-      {
-        url: api.healthCard,
-        method: 'GET',
-        headers: headers,
-        jar: j,
-      },
-      (err) => {
-        if (err) reject(err)
-        var cookies = j.getCookies(api.healthCard)
-        headers.Cookie = cookies[0].cookieString()
-        pushMessage(`获取Cookie成功`)
-        resolve()
-      },
-    )
+  await customGot(api.healthCard)
+
+  customGot = customGot.extend({
+    headers: { 'content-type': 'application/json' },
+    responseType: 'json',
   })
 }
 

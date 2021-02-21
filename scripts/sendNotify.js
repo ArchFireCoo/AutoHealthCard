@@ -1,23 +1,23 @@
-const axios = require('axios')
+const got = require('got')
 
 const SCKEY = process.env.SCKEY
 
 const sendNotify = (title, message) => {
   if (SCKEY) {
-    axios
-      .get(`https://sc.ftqq.com/${SCKEY}.sendNotify`, {
-        params: {
-          text: title,
-          desp: message,
-        },
-      })
-      .then(({ data }) => {
-        if (data.errno === 0) {
+    got(`https://sc.ftqq.com/${SCKEY}.sendNotify`, {
+      searchParams: {
+        text: title,
+        desp: message,
+      },
+      responseType: 'json',
+    })
+      .then(({ body }) => {
+        if (body.errno === 0) {
           console.log('server酱发送通知消息成功\n')
-        } else if (data.errno === 1024) {
-          console.log(`server酱发送通知消息异常: ${data.errmsg}\n`)
+        } else if (body.errno === 1024) {
+          console.log(`server酱发送通知消息异常: ${body.errmsg}\n`)
         } else {
-          console.log(`server酱发送通知消息异常\n${JSON.stringify(data)}`)
+          console.log(`server酱发送通知消息异常\n${JSON.stringify(body)}`)
         }
       })
       .catch((err) => {
