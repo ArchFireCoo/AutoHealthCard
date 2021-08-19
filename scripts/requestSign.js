@@ -13,14 +13,14 @@ const headers = {
 }
 
 const api = {
-  login: 'https://authserver.jluzh.edu.cn/cas/login',
-  healthCard: 'https://work.jluzh.edu.cn/default/work/jlzh/jkxxtb/jkxxcj.jsp',
+  login: 'https://authserver.zcst.edu.cn/cas/login',
+  healthCard: 'https://work.zcst.edu.cn/default/work/jlzh/jkxxtb/jkxxcj.jsp',
   getHealthData:
-    'https://work.jluzh.edu.cn/default/work/jlzh/jkxxtb/com.sudytech.work.jlzh.jkxxtb.jkxxcj.queryToday.biz.ext',
+    'https://work.zcst.edu.cn/default/work/jlzh/jkxxtb/com.sudytech.work.jlzh.jkxxtb.jkxxcj.queryToday.biz.ext',
   submitHealthCard:
-    'https://work.jluzh.edu.cn/default/work/jlzh/jkxxtb/com.sudytech.portalone.base.db.saveOrUpdate.biz.ext',
+    'https://work.zcst.edu.cn/default/work/jlzh/jkxxtb/com.sudytech.portalone.base.db.saveOrUpdate.biz.ext',
   checkSignInStatus:
-    'https://work.jluzh.edu.cn/default/work/jlzh/jkxxtb/com.sudytech.portalone.base.db.queryBySqlWithoutPagecond.biz.ext',
+    'https://work.zcst.edu.cn/default/work/jlzh/jkxxtb/com.sudytech.portalone.base.db.queryBySqlWithoutPagecond.biz.ext',
   queryToday: 'com.sudytech.work.jlzh.jkxxtb.jkxxcj.queryToday',
   queryNear: 'com.sudytech.work.jlzh.jkxxtb.jkxxcj.queryNear',
 }

@@ -18,7 +18,7 @@ const startUp = () => {
         const page = await browser.newPage()
 
         await page.goto(
-          'https://authserver.jluzh.edu.cn/cas/login?service=https%3A%2F%2Fmy.jluzh.edu.cn%2F_web%2Ffusionportal%2Fthings.jsp%3F_p%3DYXM9MSZwPTEmbT1OJg__',
+          'https://authserver.zcst.edu.cn/cas/login?service=https%3A%2F%2Fmy.zcst.edu.cn%2F_web%2Ffusionportal%2Fthings.jsp%3F_p%3DYXM9MSZwPTEmbT1OJg__',
         )
 
         await page.type('#username', process.env.USERNAME)
@@ -33,7 +33,7 @@ const startUp = () => {
 
         if (page.url().includes('/cas/login')) throw new Error('账号或密码错误！')
 
-        await page.goto('https://work.jluzh.edu.cn/default/work/jlzh/jkxxtb/jkxxcj.jsp')
+        await page.goto('https://work.zcst.edu.cn/default/work/jlzh/jkxxtb/jkxxcj.jsp')
 
         await page.waitForSelector('.prompt_box_confirmText', { visible: true })
         await page.click('.prompt_box_confirmText')
